@@ -4,20 +4,26 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Bypasses the strict runner restrictions on older code bases
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
-      - uses: actions/checkout@v4
+      # Downgrading the action versions to v2 makes them compatible with legacy setups
+      - uses: actions/checkout@v2
       
-      # Downgrading Java to v8 allows old Gradle wrappers to run without crashing
       - name: set up JDK 8
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v2
         with:
           java-version: '8'
           distribution: 'temurin'
 
+      # Fixes possible end-of-line configuration issues from old repositories
+      - name: Fix line endings for gradlew
+        run: sed -i 's/\r$//' gradlew
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Forces compilation even if the repository configuration contains old warnings
       - name: Build with Gradle
         run: ./gradlew assembleDebug --stacktrace
 
